@@ -2,13 +2,18 @@ package com.taobao.idlefish.flutterboostexample;
 
 import android.app.Application;
 import android.content.Context;
-
 import android.util.Log;
-import com.idlefish.flutterboost.*;
 
+import com.alibaba.fastjson.JSON;
+import com.idlefish.flutterboost.NewFlutterBoost;
+import com.idlefish.flutterboost.Platform;
+import com.idlefish.flutterboost.interfaces.INativeRouter;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.util.List;
 import java.util.Map;
 
-import com.idlefish.flutterboost.interfaces.INativeRouter;
 import io.flutter.embedding.android.FlutterView;
 import io.flutter.plugin.common.MethodChannel;
 
@@ -21,7 +26,7 @@ public class MyApplication extends Application {
         INativeRouter router =new INativeRouter() {
             @Override
             public void openContainer(Context context, String url, Map<String, Object> urlParams, int requestCode, Map<String, Object> exts) {
-               String  assembleUrl=Utils.assembleUrl(url,urlParams);
+               String  assembleUrl=assembleUrl(url,urlParams);
                 PageRouter.openPageByUrl(context,assembleUrl, urlParams);
             }
 
@@ -59,4 +64,49 @@ public class MyApplication extends Application {
 
 
     }
+
+    public static String assembleUrl(String url, Map<String, Object> urlParams) {
+
+        StringBuilder targetUrl = new StringBuilder(url);
+        if (urlParams != null && !urlParams.isEmpty()) {
+            if (!targetUrl.toString().contains("?")) {
+                targetUrl.append("?");
+            }
+
+            for (Map.Entry entry : urlParams.entrySet()) {
+                if (entry.getValue() instanceof Map) {
+                    Map<String, Object> params = (Map<String, Object>) entry.getValue();
+
+                    for (Map.Entry param : params.entrySet()) {
+                        String key = (String) param.getKey();
+                        String value = null;
+                        if (param.getValue() instanceof Map || param.getValue() instanceof List) {
+                            try {
+                                value = URLEncoder.encode(JSON.toJSONString(param.getValue()), "UTF-8");
+                            } catch (UnsupportedEncodingException e) {
+                                e.printStackTrace();
+                            }
+                        } else {
+                            value = (param.getValue() == null ? null : URLEncoder.encode(String.valueOf(param.getValue())));
+                        }
+
+                        if (value == null) {
+                            continue;
+                        }
+                        if (targetUrl.toString().endsWith("?")) {
+                            targetUrl.append(key).append("=").append(value);
+                        } else {
+                            targetUrl.append("&").append(key).append("=").append(value);
+                        }
+
+                    }
+                }
+
+            }
+
+        }
+        return targetUrl.toString();
+    }
+
+
 }
