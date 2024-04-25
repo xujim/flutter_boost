@@ -43,14 +43,13 @@ class AppLifecycleObserver with GlobalPageVisibilityObserver {
 
 ///单个生命周期示例
 class LifecycleTestPage extends StatefulWidget {
-  const LifecycleTestPage({Key key}) : super(key: key);
+  const LifecycleTestPage({Key? key}) : super(key: key);
 
   @override
   _LifecycleTestPageState createState() => _LifecycleTestPageState();
 }
 
-class _LifecycleTestPageState extends State<LifecycleTestPage>
-    with PageVisibilityObserver {
+class _LifecycleTestPageState extends State<LifecycleTestPage> with PageVisibilityObserver {
   @override
   void onBackground() {
     super.onBackground();
@@ -86,8 +85,10 @@ class _LifecycleTestPageState extends State<LifecycleTestPage>
   void didChangeDependencies() {
     super.didChangeDependencies();
 
+    Route<dynamic> route = ModalRoute.of(context) as Route<dynamic>;
+
     ///注册监听器
-    PageVisibilityBinding.instance.addObserver(this, ModalRoute.of(context));
+    PageVisibilityBinding.instance.addObserver(this, route);
   }
 
   @override
@@ -112,14 +113,12 @@ class _LifecycleTestPageState extends State<LifecycleTestPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text('simple lifecycle test page',
-                style: TextStyle(fontSize: 24)),
+            const Text('simple lifecycle test page', style: TextStyle(fontSize: 24)),
             const SizedBox(height: 40),
             CupertinoButton.filled(
                 child: const Text('push simple page'),
                 onPressed: () {
-                  BoostNavigator.instance
-                      .push("simplePage", withContainer: true);
+                  BoostNavigator.instance.push("simplePage", withContainer: true);
                 }),
           ],
         ),

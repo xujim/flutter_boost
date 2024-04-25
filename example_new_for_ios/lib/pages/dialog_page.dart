@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_boost/flutter_boost.dart';
 
 class DialogPage extends StatefulWidget {
-  const DialogPage({Key key}) : super(key: key);
+  const DialogPage({Key? key}) : super(key: key);
 
   @override
   _DialogPageState createState() => _DialogPageState();
@@ -18,10 +18,7 @@ class _DialogPageState extends State<DialogPage> {
         height: 250,
         alignment: Alignment.center,
         width: MediaQuery.of(context).size.width,
-        decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(30), topRight: Radius.circular(30))),
+        decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.only(topLeft: Radius.circular(30), topRight: Radius.circular(30))),
         child: Material(
           child: CupertinoButton(
               color: Colors.deepPurpleAccent,

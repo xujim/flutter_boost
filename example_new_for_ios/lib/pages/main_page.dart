@@ -5,14 +5,14 @@ import 'package:flutter_boost/flutter_boost.dart';
 class Model {
   Model(this.title, this.onTap);
 
-  String title;
-  VoidCallback onTap;
+  String? title;
+  VoidCallback? onTap;
 }
 
 class MainPage extends StatefulWidget {
-  final String data;
+  final String? data;
 
-  const MainPage({Key key, this.data}) : super(key: key);
+  const MainPage({Key? key, this.data}) : super(key: key);
 
   @override
   _MainPageState createState() => _MainPageState();
@@ -23,7 +23,7 @@ class _MainPageState extends State<MainPage> {
 
   GlobalKey<ScaffoldState> key = GlobalKey();
 
-  VoidCallback removeListener;
+  VoidCallback? removeListener;
 
   ValueNotifier<bool> withContainer = ValueNotifier(false);
 
@@ -33,8 +33,7 @@ class _MainPageState extends State<MainPage> {
 
     ///这里添加监听，原生利用'event'这个key发送过来消息的时候，下面的函数会调用，
     ///这里就是简单的在flutter上弹一个弹窗
-    removeListener =
-        BoostChannel.instance.addEventListener("event", (key, arguments) {
+    removeListener = BoostChannel.instance.addEventListener("event", (key, arguments) {
       OverlayEntry entry = OverlayEntry(builder: (_) {
         return Center(
             child: Material(
@@ -43,20 +42,17 @@ class _MainPageState extends State<MainPage> {
             alignment: Alignment.center,
             width: 100,
             height: 100,
-            decoration: BoxDecoration(
-                color: Colors.red, borderRadius: BorderRadius.circular(4)),
-            child: Text('这是native传来的参数：${arguments.toString()}',
-                style: const TextStyle(color: Colors.white)),
+            decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(4)),
+            child: Text('这是native传来的参数：${arguments.toString()}', style: const TextStyle(color: Colors.white)),
           ),
         ));
       });
 
       Overlay.of(context).insert(entry);
 
-      Future.delayed(const Duration(seconds: 2), () {
+      return Future.delayed(const Duration(seconds: 2), () {
         entry.remove();
       });
-      return;
     });
   }
 
@@ -75,31 +71,20 @@ class _MainPageState extends State<MainPage> {
     ///
     final List<Model> models = [
       Model("open native page", () {
-        BoostNavigator.instance.push("homePage", arguments: {
-          'data': _controller.text
-        }).then((value) => showTipIfNeeded(value.toString()));
+        BoostNavigator.instance.push("homePage", arguments: {'data': _controller.text}).then((value) => showTipIfNeeded(value.toString()));
       }),
       Model("return to native page with data", () {
         Map<String, Object> result = {'data': _controller.text};
         BoostNavigator.instance.pop(result);
       }),
       Model("open flutter main page", () {
-        BoostNavigator.instance.push("mainPage",
-            withContainer: withContainer.value,
-            arguments: {
-              'data': _controller.text
-            }).then((value) => showTipIfNeeded(value.toString()));
+        BoostNavigator.instance.push("mainPage", withContainer: withContainer.value, arguments: {'data': _controller.text}).then((value) => showTipIfNeeded(value.toString()));
       }),
       Model("open flutter simple page", () {
-        BoostNavigator.instance.push("simplePage",
-            withContainer: withContainer.value,
-            arguments: {
-              'data': _controller.text
-            }).then((value) => showTipIfNeeded(value.toString()));
+        BoostNavigator.instance.push("simplePage", withContainer: withContainer.value, arguments: {'data': _controller.text}).then((value) => showTipIfNeeded(value.toString()));
       }),
       Model("push with flutter Navigator", () {
-        Navigator.of(context)
-            .pushNamed('simplePage', arguments: {'data': _controller.text});
+        Navigator.of(context).pushNamed('simplePage', arguments: {'data': _controller.text});
       }),
       Model("show dialog", () {
         showDialog(
@@ -115,8 +100,7 @@ class _MainPageState extends State<MainPage> {
                     height: 100,
                     width: 100,
                     child: const Material(
-                      child: Text('this is a dialog',
-                          style: TextStyle(fontSize: 25)),
+                      child: Text('this is a dialog', style: TextStyle(fontSize: 25)),
                     ),
                     color: Colors.redAccent,
                   ),
@@ -145,8 +129,7 @@ class _MainPageState extends State<MainPage> {
       }),
       Model("send event to native", () {
         ///传值给原生
-        BoostChannel.instance
-            .sendEventToNative("event", {'data': "event from flutter"});
+        BoostChannel.instance.sendEventToNative("event", {'data': "event from flutter"});
         BoostNavigator.instance.pop();
       }),
     ];
@@ -178,14 +161,10 @@ class _MainPageState extends State<MainPage> {
             emptyBox(0, 30),
             SliverToBoxAdapter(
                 child: Center(
-              child: Text('Data String is: ${widget.data}',
-                  style: const TextStyle(fontSize: 30)),
+              child: Text('Data String is: ${widget.data}', style: const TextStyle(fontSize: 30)),
             )),
             emptyBox(0, 30),
-            SliverList(
-                delegate: SliverChildBuilderDelegate(
-                    (ctx, index) => item(models[index]),
-                    childCount: models.length)),
+            SliverList(delegate: SliverChildBuilderDelegate((ctx, index) => item(models[index]), childCount: models.length)),
             emptyBox(0, 50),
           ],
         ),
@@ -209,8 +188,7 @@ class _MainPageState extends State<MainPage> {
         child: CupertinoTextField(
           padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
           controller: _controller,
-          decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(5), color: Colors.amber),
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(5), color: Colors.amber),
           placeholder: 'input data ',
           placeholderStyle: const TextStyle(color: Colors.black38),
         ),
@@ -224,11 +202,7 @@ class _MainPageState extends State<MainPage> {
       child: CupertinoButton.filled(
         padding: const EdgeInsets.symmetric(vertical: 15),
         onPressed: model.onTap,
-        child: Text(model.title,
-            style: const TextStyle(
-                fontSize: 20,
-                color: Colors.white,
-                fontWeight: FontWeight.w500)),
+        child: Text(model.title ?? '', style: const TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.w500)),
       ),
     );
   }
@@ -237,17 +211,14 @@ class _MainPageState extends State<MainPage> {
     if (value == null || value == 'null' || value.isEmpty) {
       return;
     }
-    final bar = SnackBar(
-        content: Text('return value is $value'),
-        duration: const Duration(seconds: 1));
+    final bar = SnackBar(content: Text('return value is $value'), duration: const Duration(seconds: 1));
     ScaffoldMessenger.of(context).showSnackBar(bar);
   }
 
   Widget _buildBottomBar() {
     return Container(
       color: Colors.grey[200],
-      padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).padding.bottom + 10, top: 10),
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 10, top: 10),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -257,7 +228,7 @@ class _MainPageState extends State<MainPage> {
           ),
           ValueListenableBuilder(
             valueListenable: withContainer,
-            builder: (BuildContext context, value, Widget child) {
+            builder: (BuildContext context, value, Widget? child) {
               return CupertinoSwitch(
                   value: value,
                   onChanged: (newValue) {
