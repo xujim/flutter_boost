@@ -57,8 +57,7 @@ class FlutterBoostApp extends StatefulWidget {
 class FlutterBoostAppState extends State<FlutterBoostApp> {
   static const String _appLifecycleChangedKey = "app_lifecycle_changed_key";
 
-  final Map<String, Completer<Object?>> _pendingResult =
-      <String, Completer<Object?>>{};
+  final Map<String, Completer<Object?>> _pendingResult = <String, Completer<Object?>>{};
 
   final List<BoostContainer> _containers = <BoostContainer>[];
 
@@ -67,8 +66,7 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
   /// All interceptors from widget
   List<BoostInterceptor> get interceptors => widget.interceptors;
 
-  BoostContainer? get topContainer =>
-      _containers.isNotEmpty ? _containers.last : null;
+  BoostContainer? get topContainer => _containers.isNotEmpty ? _containers.last : null;
 
   NativeRouterApi get nativeRouterApi => _nativeRouterApi;
   late NativeRouterApi _nativeRouterApi;
@@ -79,8 +77,7 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
   final Set<int> _activePointers = <int>{};
 
   ///Things about method channel
-  final Map<String, List<EventListener>> _listenersTable =
-      <String, List<EventListener>>{};
+  final Map<String, List<EventListener>> _listenersTable = <String, List<EventListener>>{};
 
   late VoidCallback _lifecycleStateListenerRemover;
 
@@ -94,8 +91,7 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
     _boostFlutterRouterApi = BoostFlutterRouterApi(this);
 
     /// create the container matching the initial route
-    final BoostContainer initialContainer =
-        _createContainer(PageInfo(pageName: widget.initialRoute));
+    final BoostContainer initialContainer = _createContainer(PageInfo(pageName: widget.initialRoute));
     _containers.add(initialContainer);
     super.initState();
 
@@ -104,7 +100,7 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // try to restore routes from host when hot restart.
       assert(() {
-        _restoreStackForHotRestart();
+        _restoreStackForHotRestart(); //TODO：为什么有这个操作？
         return true;
       }());
 
@@ -120,8 +116,7 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
   ///if container num >= 1,the state == [AppLifecycleState.resumed]
   ///else state == [AppLifecycleState.paused]
   void _addAppLifecycleStateEventListener() {
-    _lifecycleStateListenerRemover = BoostChannel.instance
-        .addEventListener(_appLifecycleChangedKey, (key, arguments) {
+    _lifecycleStateListenerRemover = BoostChannel.instance.addEventListener(_appLifecycleChangedKey, (key, arguments) {
       //we just deal two situation,resume and pause
       //and 0 is resumed
       //and 2 is paused
@@ -129,11 +124,9 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
       final int? index = arguments["lifecycleState"];
 
       if (index == AppLifecycleState.resumed.index) {
-        BoostFlutterBinding.instance!
-            .changeAppLifecycleState(AppLifecycleState.resumed);
+        BoostFlutterBinding.instance!.changeAppLifecycleState(AppLifecycleState.resumed);
       } else if (index == AppLifecycleState.paused.index) {
-        BoostFlutterBinding.instance!
-            .changeAppLifecycleState(AppLifecycleState.paused);
+        BoostFlutterBinding.instance!.changeAppLifecycleState(AppLifecycleState.paused);
       }
       return Future<dynamic>.value();
     });
@@ -157,10 +150,12 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
           return false;
         },
         child: Listener(
+            //TODO: 这个listener用来干嘛？
             onPointerDown: _handlePointerDown,
             onPointerUp: _handlePointerUpOrCancel,
             onPointerCancel: _handlePointerUpOrCancel,
             child: Overlay(
+              //overlay是个集合，内部管理了多个overlayentry
               key: overlayKey,
               initialEntries: const <OverlayEntry>[],
             ))));
@@ -184,10 +179,10 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
 
   BoostContainer _createContainer(PageInfo pageInfo) {
     pageInfo.uniqueId ??= _createUniqueId(pageInfo.pageName);
-    return BoostContainer(
-        key: ValueKey<String?>(pageInfo.uniqueId), pageInfo: pageInfo);
+    return BoostContainer(key: ValueKey<String?>(pageInfo.uniqueId), pageInfo: pageInfo);
   }
 
+//TODO: 为何增加这几个函数？
   Future<void> _saveStackForHotRestart() async {
     final stack = StackInfo();
     stack.ids = <String?>[];
@@ -198,11 +193,7 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
       var flutterContainer = FlutterContainer();
       flutterContainer.pages = <FlutterPage?>[];
       for (var page in container.pages) {
-        flutterContainer.pages!.add(FlutterPage(
-            withContainer: page.pageInfo.withContainer,
-            pageName: page.pageInfo.pageName,
-            uniqueId: page.pageInfo.uniqueId,
-            arguments: page.pageInfo.arguments));
+        flutterContainer.pages!.add(FlutterPage(withContainer: page.pageInfo.withContainer, pageName: page.pageInfo.pageName, uniqueId: page.pageInfo.uniqueId, arguments: page.pageInfo.arguments));
       }
       stack.containers![uniqueId] = flutterContainer;
     }
@@ -229,11 +220,7 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
                 }
               }
 
-              withContainer
-                  ? pushContainer(page.pageName,
-                      uniqueId: page.uniqueId, arguments: args)
-                  : pushPage(page.pageName,
-                      uniqueId: page.uniqueId, arguments: args);
+              withContainer ? pushContainer(page.pageName, uniqueId: page.uniqueId, arguments: args) : pushPage(page.pageName, uniqueId: page.uniqueId, arguments: args);
               withContainer = false;
             }
           }
@@ -243,22 +230,13 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
     Logger.log('_restoreStackForHotRestart, $ids, $containers');
   }
 
-  Future<T> pushWithInterceptor<T extends Object?>(
-      String? name, bool isFromHost, bool isFlutterPage,
-      {Map<String, dynamic>? arguments,
-      String? uniqueId,
-      bool? withContainer,
-      bool opaque = true}) {
+  Future<T> pushWithInterceptor<T extends Object?>(String? name, bool isFromHost, bool isFlutterPage, {Map<String, dynamic>? arguments, String? uniqueId, bool? withContainer, bool opaque = true}) {
     Logger.log('pushWithInterceptor, uniqueId=$uniqueId, name=$name');
-    var pushOption = BoostInterceptorOption(name,
-        uniqueId: uniqueId,
-        isFromHost: isFromHost,
-        arguments: arguments ?? <String, dynamic>{});
-    InterceptorState<BoostInterceptorOption>? state =
-        InterceptorState<BoostInterceptorOption>(pushOption);
+    var pushOption = BoostInterceptorOption(name, uniqueId: uniqueId, isFromHost: isFromHost, arguments: arguments ?? <String, dynamic>{});
+    InterceptorState<BoostInterceptorOption>? state = InterceptorState<BoostInterceptorOption>(pushOption);
     for (var interceptor in interceptors) {
       final pushHandler = PushInterceptorHandler();
-      interceptor.onPrePush(state!.data, pushHandler);
+      interceptor.onPrePush(state!.data, pushHandler); //TODO: 这里似乎没有做任何事情，是留待扩展吗？
 
       // user resolve or do nothing
       if (pushHandler.state?.type != InterceptorResultType.next) {
@@ -272,22 +250,16 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
     if (state?.type == InterceptorResultType.next) {
       pushOption = state!.data;
       if (isFromHost) {
-        pushContainer(name,
-            uniqueId: pushOption.uniqueId,
-            isFromHost: isFromHost,
-            arguments: pushOption.arguments);
+        pushContainer(name, uniqueId: pushOption.uniqueId, isFromHost: isFromHost, arguments: pushOption.arguments);
       } else {
         if (isFlutterPage) {
-          return pushWithResult(pushOption.name,
-              uniqueId: pushOption.uniqueId,
-              arguments: pushOption.arguments,
-              withContainer: withContainer!,
-              opaque: opaque);
+          //该函数会从flutter调native，创建新的flutter vc native页面
+          return pushWithResult(pushOption.name, uniqueId: pushOption.uniqueId, arguments: pushOption.arguments, withContainer: withContainer!, opaque: opaque);
         } else {
           final params = CommonParams()
             ..pageName = pushOption.name
             ..arguments = pushOption.arguments;
-          nativeRouterApi.pushNativeRoute(params);
+          nativeRouterApi.pushNativeRoute(params); //打开原生页面——和flutter无关的
           return pendNativeResult(pushOption.name);
         }
       }
@@ -296,11 +268,7 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
     return Future<T>.value();
   }
 
-  Future<T> pushWithResult<T extends Object?>(String? pageName,
-      {String? uniqueId,
-      Map<String, dynamic>? arguments,
-      required bool withContainer,
-      bool opaque = true}) {
+  Future<T> pushWithResult<T extends Object?>(String? pageName, {String? uniqueId, Map<String, dynamic>? arguments, required bool withContainer, bool opaque = true}) {
     uniqueId ??= _createUniqueId(pageName);
     if (withContainer) {
       final completer = Completer<T>();
@@ -317,25 +285,19 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
     }
   }
 
-  Future<T> pushPage<T extends Object?>(String? pageName,
-      {String? uniqueId, Map<String, dynamic>? arguments}) {
+//这种仅仅是创建page
+  Future<T> pushPage<T extends Object?>(String? pageName, {String? uniqueId, Map<String, dynamic>? arguments}) {
     Logger.log('pushPage, uniqueId=$uniqueId, name=$pageName,'
         ' arguments:$arguments, $topContainer');
-    final pageInfo = PageInfo(
-        pageName: pageName,
-        uniqueId: uniqueId ?? _createUniqueId(pageName),
-        arguments: arguments,
-        withContainer: false);
+    final pageInfo = PageInfo(pageName: pageName, uniqueId: uniqueId ?? _createUniqueId(pageName), arguments: arguments, withContainer: false);
     assert(topContainer != null);
     var result = topContainer!.addPage(BoostPage.create(pageInfo));
     _pushFinish(pageName, uniqueId: uniqueId, arguments: arguments);
     return result!.then((value) => value as T);
   }
 
-  void pushContainer(String? pageName,
-      {String? uniqueId,
-      bool isFromHost = false,
-      Map<String, dynamic>? arguments}) {
+//这个会创建container
+  void pushContainer(String? pageName, {String? uniqueId, bool isFromHost = false, Map<String, dynamic>? arguments}) {
     _cancelActivePointers();
     final existed = _findContainerByUniqueId(uniqueId);
     if (existed != null) {
@@ -347,37 +309,24 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
         refreshOnMoveToTop(existed);
       }
     } else {
-      final pageInfo = PageInfo(
-          pageName: pageName,
-          uniqueId: uniqueId ?? _createUniqueId(pageName),
-          arguments: arguments,
-          withContainer: true);
+      final pageInfo = PageInfo(pageName: pageName, uniqueId: uniqueId ?? _createUniqueId(pageName), arguments: arguments, withContainer: true);
       final container = _createContainer(pageInfo);
       final previousContainer = topContainer;
       _containers.add(container);
-      BoostLifecycleBinding.instance
-          .containerDidPush(container, previousContainer);
+      BoostLifecycleBinding.instance.containerDidPush(container, previousContainer);
 
       // Add a new overlay entry with this container
       refreshOnPush(container);
     }
 
-    _pushFinish(pageName,
-        uniqueId: uniqueId, isFromHost: isFromHost, arguments: arguments);
+    _pushFinish(pageName, uniqueId: uniqueId, isFromHost: isFromHost, arguments: arguments);
     Logger.log('pushContainer, uniqueId=$uniqueId, existed=$existed,'
         ' arguments:$arguments, $_containers');
   }
 
-  void _pushFinish(String? pageName,
-      {String? uniqueId,
-      bool isFromHost = false,
-      Map<String, dynamic>? arguments}) {
-    var pushOption = BoostInterceptorOption(pageName,
-        uniqueId: uniqueId,
-        isFromHost: isFromHost,
-        arguments: arguments ?? <String, dynamic>{});
-    InterceptorState<BoostInterceptorOption>? state =
-        InterceptorState<BoostInterceptorOption>(pushOption);
+  void _pushFinish(String? pageName, {String? uniqueId, bool isFromHost = false, Map<String, dynamic>? arguments}) {
+    var pushOption = BoostInterceptorOption(pageName, uniqueId: uniqueId, isFromHost: isFromHost, arguments: arguments ?? <String, dynamic>{});
+    InterceptorState<BoostInterceptorOption>? state = InterceptorState<BoostInterceptorOption>(pushOption);
     for (var interceptor in interceptors) {
       final pushHandler = PushInterceptorHandler();
       interceptor.onPostPush(state!.data, pushHandler);
@@ -393,8 +342,7 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
     return await pop(result: result);
   }
 
-  Future<bool> removeWithResult(
-      [String? uniqueId, Map<String, dynamic>? result]) async {
+  Future<bool> removeWithResult([String? uniqueId, Map<String, dynamic>? result]) async {
     return await pop(uniqueId: uniqueId, result: result);
   }
 
@@ -405,8 +353,7 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
     if (uniqueId != null) {
       for (int index = _containers.length - 1; index >= 0; index--) {
         for (BoostPage page in _containers[index].pages) {
-          if (uniqueId == page.pageInfo.uniqueId ||
-              uniqueId == _containers[index].pageInfo.uniqueId) {
+          if (uniqueId == page.pageInfo.uniqueId || uniqueId == _containers[index].pageInfo.uniqueId) {
             //uniqueId优先级更高，优先匹配
             targetContainer = _containers[index];
             targetPage = page;
@@ -440,9 +387,7 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
       /// _containers item index would change when call 'nativeRouterApi.popRoute' method with sync.
       /// clone _containers keep original item index.
       List<BoostContainer> containersTemp = [..._containers];
-      for (int index = containersTemp.length - 1;
-          index > popUntilIndex;
-          index--) {
+      for (int index = containersTemp.length - 1; index > popUntilIndex; index--) {
         BoostContainer container = containersTemp[index];
         final params = CommonParams()
           ..pageName = container.pageInfo.pageName
@@ -452,18 +397,14 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
       }
 
       if (targetContainer.topPage != targetPage) {
-        Future<void>.delayed(
-            const Duration(milliseconds: 50),
-            () => targetContainer?.navigator
-                ?.popUntil(ModalRoute.withName(targetPage!.name!)));
+        Future<void>.delayed(const Duration(milliseconds: 50), () => targetContainer?.navigator?.popUntil(ModalRoute.withName(targetPage!.name!)));
       }
     } else {
       topContainer?.navigator?.popUntil(ModalRoute.withName(targetPage!.name!));
     }
   }
 
-  Future<bool> pop(
-      {String? uniqueId, Object? result, bool onBackPressed = false}) async {
+  Future<bool> pop({String? uniqueId, Object? result, bool onBackPressed = false}) async {
     if (topContainer == null) return false;
     BoostContainer? container;
     if (uniqueId != null) {
@@ -473,8 +414,7 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
         return false;
       }
       if (container != topContainer) {
-        _completePendingResultIfNeeded(container.pageInfo.uniqueId,
-            result: result);
+        _completePendingResultIfNeeded(container.pageInfo.uniqueId, result: result);
         await _removeContainer(container);
         return true;
       }
@@ -490,18 +430,14 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
     String? targetPage = uniqueId;
     final String topPage = container!.pages.last.pageInfo.uniqueId!;
     if (uniqueId == null || uniqueId == topPage) {
-      final handled = onBackPressed
-          ? await _performBackPressed(container, result)
-          : container.navigator?.canPop();
+      final handled = onBackPressed ? await _performBackPressed(container, result) : container.navigator?.canPop();
       if (handled != null) {
         if (!handled) {
           assert(container.pageInfo.withContainer!);
           final params = CommonParams()
             ..pageName = container.pageInfo.pageName
             ..uniqueId = container.pageInfo.uniqueId
-            ..arguments = ((result is Map<String, dynamic>)
-                ? result
-                : <String, dynamic>{});
+            ..arguments = ((result is Map<String, dynamic>) ? result : <String, dynamic>{});
           await nativeRouterApi.popRoute(params);
           targetPage = targetPage ?? topPage;
         } else {
@@ -519,8 +455,7 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
         }
       }
     } else {
-      final page = container.pages
-          .singleWhereOrNull((entry) => entry.pageInfo.uniqueId == uniqueId);
+      final page = container.pages.singleWhereOrNull((entry) => entry.pageInfo.uniqueId == uniqueId);
       container.removePage(page);
     }
 
@@ -529,8 +464,7 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
     return true;
   }
 
-  Future<bool> _performBackPressed(
-      BoostContainer container, Object? result) async {
+  Future<bool> _performBackPressed(BoostContainer container, Object? result) async {
     if (container.backPressedHandler != null) {
       container.backPressedHandler!.call();
       return true;
@@ -571,15 +505,13 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
     //
     //If we can't find any container or page matching this id,we return null
 
-    var result = _containers
-        .singleWhereOrNull((element) => element.pageInfo.uniqueId == uniqueId);
+    var result = _containers.singleWhereOrNull((element) => element.pageInfo.uniqueId == uniqueId);
 
     if (result != null) {
       return result;
     }
 
-    return _containers.singleWhereOrNull((element) =>
-        element.pages.any((element) => element.pageInfo.uniqueId == uniqueId));
+    return _containers.singleWhereOrNull((element) => element.pages.any((element) => element.pageInfo.uniqueId == uniqueId));
   }
 
   void remove(String? uniqueId) {
@@ -596,8 +528,7 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
       refreshOnRemove(container);
     } else {
       for (var container in _containers) {
-        final page = container.pages
-            .singleWhereOrNull((entry) => entry.pageInfo.uniqueId == uniqueId);
+        final page = container.pages.singleWhereOrNull((entry) => entry.pageInfo.uniqueId == uniqueId);
         container.removePage(page);
       }
     }
@@ -613,6 +544,7 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
     return completer.future;
   }
 
+//native侧回调，用于传输实际的返回值
   void onNativeResult(CommonParams params) {
     final initiatorPage = topContainer?.topPage.pageInfo.uniqueId;
     final key = '$initiatorPage#${params.pageName}';
@@ -623,8 +555,7 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
     Logger.log('onNativeResult, key:$key, result:${params.arguments}');
   }
 
-  void _completePendingResultIfNeeded<T extends Object?>(String? uniqueId,
-      {T? result}) {
+  void _completePendingResultIfNeeded<T extends Object?>(String? uniqueId, {T? result}) {
     if (uniqueId != null && _pendingResult.containsKey(uniqueId)) {
       _pendingResult[uniqueId]!.complete(result ?? {});
       _pendingResult.remove(uniqueId);
@@ -699,8 +630,7 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
   ///
 
   void refreshOnPush(BoostContainer container) {
-    ContainerOverlay.instance.refreshSpecificOverlayEntries(
-        container, BoostSpecificEntryRefreshMode.add);
+    ContainerOverlay.instance.refreshSpecificOverlayEntries(container, BoostSpecificEntryRefreshMode.add);
     assert(() {
       _saveStackForHotRestart();
       return true;
@@ -708,8 +638,7 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
   }
 
   void refreshOnRemove(BoostContainer container) {
-    ContainerOverlay.instance.refreshSpecificOverlayEntries(
-        container, BoostSpecificEntryRefreshMode.remove);
+    ContainerOverlay.instance.refreshSpecificOverlayEntries(container, BoostSpecificEntryRefreshMode.remove);
     assert(() {
       _saveStackForHotRestart();
       return true;
@@ -717,8 +646,7 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
   }
 
   void refreshOnMoveToTop(BoostContainer container) {
-    ContainerOverlay.instance.refreshSpecificOverlayEntries(
-        container, BoostSpecificEntryRefreshMode.moveToTop);
+    ContainerOverlay.instance.refreshSpecificOverlayEntries(container, BoostSpecificEntryRefreshMode.moveToTop);
     assert(() {
       _saveStackForHotRestart();
       return true;
@@ -728,13 +656,9 @@ class FlutterBoostAppState extends State<FlutterBoostApp> {
 
 // ignore: must_be_immutable
 class BoostPage<T> extends Page<T> {
-  BoostPage._({LocalKey? key, required this.pageInfo})
-      : super(
-            key: key, name: pageInfo.pageName, arguments: pageInfo.arguments) {
-    _route = BoostNavigator.instance.routeFactory(this, pageInfo.uniqueId)
-        as Route<T>?;
-    assert(_route != null,
-        "Oops! Route name is not registered: '${pageInfo.pageName}'.");
+  BoostPage._({LocalKey? key, required this.pageInfo}) : super(key: key, name: pageInfo.pageName, arguments: pageInfo.arguments) {
+    _route = BoostNavigator.instance.routeFactory(this, pageInfo.uniqueId) as Route<T>?;
+    assert(_route != null, "Oops! Route name is not registered: '${pageInfo.pageName}'.");
   }
   final PageInfo pageInfo;
 
@@ -746,6 +670,8 @@ class BoostPage<T> extends Page<T> {
 
   Route<T>? get route => _route;
 
+  ///关于completer，参考 https://www.flutteris.com/blog/en/completer 他其实类似多线程的semphore
+  ///还可以看这里有个现成的例子 https://dart.academy/futures-and-completers-in-dart-and-flutter/
   /// A future that completes when this page is popped.
   Future<T> get popped => _popCompleter.future;
   final Completer<T> _popCompleter = Completer<T>();
@@ -777,8 +703,7 @@ class BoostNavigatorObserver extends NavigatorObserver {
       BoostLifecycleBinding.instance.routeDidPush(route, previousRoute);
     }
 
-    final navigatorObserverList =
-        BoostLifecycleBinding.instance.navigatorObserverList;
+    final navigatorObserverList = BoostLifecycleBinding.instance.navigatorObserverList;
     if (navigatorObserverList.isNotEmpty) {
       for (var observer in navigatorObserverList) {
         observer.didPush(route, previousRoute);
@@ -793,8 +718,7 @@ class BoostNavigatorObserver extends NavigatorObserver {
       BoostLifecycleBinding.instance.routeDidPop(route, previousRoute);
     }
 
-    final navigatorObserverList =
-        BoostLifecycleBinding.instance.navigatorObserverList;
+    final navigatorObserverList = BoostLifecycleBinding.instance.navigatorObserverList;
     if (navigatorObserverList.isNotEmpty) {
       for (var observer in navigatorObserverList) {
         observer.didPop(route, previousRoute);
@@ -806,8 +730,7 @@ class BoostNavigatorObserver extends NavigatorObserver {
 
   @override
   void didRemove(Route<dynamic> route, Route<dynamic>? previousRoute) {
-    final navigatorObserverList =
-        BoostLifecycleBinding.instance.navigatorObserverList;
+    final navigatorObserverList = BoostLifecycleBinding.instance.navigatorObserverList;
     if (navigatorObserverList.isNotEmpty) {
       for (var observer in navigatorObserverList) {
         observer.didRemove(route, previousRoute);
@@ -819,8 +742,7 @@ class BoostNavigatorObserver extends NavigatorObserver {
 
   @override
   void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
-    final navigatorObserverList =
-        BoostLifecycleBinding.instance.navigatorObserverList;
+    final navigatorObserverList = BoostLifecycleBinding.instance.navigatorObserverList;
     if (navigatorObserverList.isNotEmpty) {
       for (var observer in navigatorObserverList) {
         observer.didReplace(newRoute: newRoute, oldRoute: oldRoute);
@@ -830,10 +752,8 @@ class BoostNavigatorObserver extends NavigatorObserver {
   }
 
   @override
-  void didStartUserGesture(
-      Route<dynamic> route, Route<dynamic>? previousRoute) {
-    final navigatorObserverList =
-        BoostLifecycleBinding.instance.navigatorObserverList;
+  void didStartUserGesture(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    final navigatorObserverList = BoostLifecycleBinding.instance.navigatorObserverList;
     if (navigatorObserverList.isNotEmpty) {
       for (var observer in navigatorObserverList) {
         observer.didStartUserGesture(route, previousRoute);
@@ -844,8 +764,7 @@ class BoostNavigatorObserver extends NavigatorObserver {
 
   @override
   void didStopUserGesture() {
-    final navigatorObserverList =
-        BoostLifecycleBinding.instance.navigatorObserverList;
+    final navigatorObserverList = BoostLifecycleBinding.instance.navigatorObserverList;
     if (navigatorObserverList.isNotEmpty) {
       for (var observer in navigatorObserverList) {
         observer.didStopUserGesture();

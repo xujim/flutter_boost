@@ -5,9 +5,9 @@
 import 'boost_navigator.dart';
 
 /// The request object in Interceptor,which is to passed
+/// 用来管理/拦截页面push pop时执行前后状态的动作
 class BoostInterceptorOption {
-  BoostInterceptorOption(this.name,
-      {this.uniqueId, this.isFromHost, this.arguments});
+  BoostInterceptorOption(this.name, {this.uniqueId, this.isFromHost, this.arguments});
 
   /// Your page name in route table
   String? name;
@@ -67,9 +67,7 @@ class BoostInterceptor {
   ///
   /// If you want to complete the push with some custom data，
   /// you can resolve a [result] object with [handler.resolve].
-  void onPrePush(
-          BoostInterceptorOption option, PushInterceptorHandler handler) =>
-      handler.next(option);
+  void onPrePush(BoostInterceptorOption option, PushInterceptorHandler handler) => handler.next(option);
 
   /// The callback will be executed after the push have been finish.
   ///
@@ -77,7 +75,5 @@ class BoostInterceptor {
   ///
   /// If you want to complete the push finish event with some custom data，
   /// you can resolve a [result] object with [handler.resolve].
-  void onPostPush(
-          BoostInterceptorOption option, PushInterceptorHandler handler) =>
-      handler.next(option);
+  void onPostPush(BoostInterceptorOption option, PushInterceptorHandler handler) => handler.next(option);
 }

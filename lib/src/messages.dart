@@ -10,6 +10,8 @@ import 'dart:typed_data' show Uint8List, Int32List, Int64List, Float64List;
 import 'package:flutter/foundation.dart' show WriteBuffer, ReadBuffer;
 import 'package:flutter/services.dart';
 
+//关于native和dart通信的method channel看这篇就够：https://www.dhiwise.com/post/leveraging-flutter-platform-channels-for-interactive-app
+
 class CommonParams {
   CommonParams({
     this.opaque,
@@ -72,6 +74,7 @@ class StackInfo {
   }
 }
 
+//代表flutter容器，内含多个flutter page
 class FlutterContainer {
   FlutterContainer({
     this.pages,
@@ -93,6 +96,7 @@ class FlutterContainer {
   }
 }
 
+//代表每个flutter page
 class FlutterPage {
   FlutterPage({
     this.withContainer,
@@ -126,6 +130,7 @@ class FlutterPage {
   }
 }
 
+//codec，flutter层发往native层
 class _NativeRouterApiCodec extends StandardMessageCodec {
   const _NativeRouterApiCodec();
   @override
@@ -133,45 +138,42 @@ class _NativeRouterApiCodec extends StandardMessageCodec {
     if (value is CommonParams) {
       buffer.putUint8(128);
       writeValue(buffer, value.encode());
-    } else 
-    if (value is FlutterContainer) {
+    } else if (value is FlutterContainer) {
       buffer.putUint8(129);
       writeValue(buffer, value.encode());
-    } else 
-    if (value is FlutterPage) {
+    } else if (value is FlutterPage) {
       buffer.putUint8(130);
       writeValue(buffer, value.encode());
-    } else 
-    if (value is StackInfo) {
+    } else if (value is StackInfo) {
       buffer.putUint8(131);
       writeValue(buffer, value.encode());
-    } else 
-{
+    } else {
       super.writeValue(buffer, value);
     }
   }
+
   @override
   Object? readValueOfType(int type, ReadBuffer buffer) {
     switch (type) {
-      case 128:       
+      case 128:
         return CommonParams.decode(readValue(buffer)!);
-      
-      case 129:       
+
+      case 129:
         return FlutterContainer.decode(readValue(buffer)!);
-      
-      case 130:       
+
+      case 130:
         return FlutterPage.decode(readValue(buffer)!);
-      
-      case 131:       
+
+      case 131:
         return StackInfo.decode(readValue(buffer)!);
-      
-      default:      
+
+      default:
         return super.readValueOfType(type, buffer);
-      
     }
   }
 }
 
+//发给native的消息通道
 class NativeRouterApi {
   /// Constructor for [NativeRouterApi].  The [binaryMessenger] named argument is
   /// available for dependency injection.  If it is left null, the default
@@ -183,10 +185,9 @@ class NativeRouterApi {
   static const MessageCodec<Object?> codec = _NativeRouterApiCodec();
 
   Future<void> pushNativeRoute(CommonParams arg_param) async {
-    final BasicMessageChannel<Object?> channel = BasicMessageChannel<Object?>(
-        'dev.flutter.pigeon.NativeRouterApi.pushNativeRoute', codec, binaryMessenger: _binaryMessenger);
-    final Map<Object?, Object?>? replyMap =
-        await channel.send(<Object?>[arg_param]) as Map<Object?, Object?>?;
+    //TODO: 这里使用的channel方法和官方的method channel不太一样，为什么？
+    final BasicMessageChannel<Object?> channel = BasicMessageChannel<Object?>('dev.flutter.pigeon.NativeRouterApi.pushNativeRoute', codec, binaryMessenger: _binaryMessenger);
+    final Map<Object?, Object?>? replyMap = await channel.send(<Object?>[arg_param]) as Map<Object?, Object?>?;
     if (replyMap == null) {
       throw PlatformException(
         code: 'channel-error',
@@ -204,11 +205,10 @@ class NativeRouterApi {
     }
   }
 
+//这个和上面的route有什么区别？pushFlutterRoute是单独打开一个flutterview container（vc），而pushNativeRoute是打开一个原生的vc（和flutter没有任何关系）
   Future<void> pushFlutterRoute(CommonParams arg_param) async {
-    final BasicMessageChannel<Object?> channel = BasicMessageChannel<Object?>(
-        'dev.flutter.pigeon.NativeRouterApi.pushFlutterRoute', codec, binaryMessenger: _binaryMessenger);
-    final Map<Object?, Object?>? replyMap =
-        await channel.send(<Object?>[arg_param]) as Map<Object?, Object?>?;
+    final BasicMessageChannel<Object?> channel = BasicMessageChannel<Object?>('dev.flutter.pigeon.NativeRouterApi.pushFlutterRoute', codec, binaryMessenger: _binaryMessenger);
+    final Map<Object?, Object?>? replyMap = await channel.send(<Object?>[arg_param]) as Map<Object?, Object?>?;
     if (replyMap == null) {
       throw PlatformException(
         code: 'channel-error',
@@ -227,10 +227,8 @@ class NativeRouterApi {
   }
 
   Future<void> popRoute(CommonParams arg_param) async {
-    final BasicMessageChannel<Object?> channel = BasicMessageChannel<Object?>(
-        'dev.flutter.pigeon.NativeRouterApi.popRoute', codec, binaryMessenger: _binaryMessenger);
-    final Map<Object?, Object?>? replyMap =
-        await channel.send(<Object?>[arg_param]) as Map<Object?, Object?>?;
+    final BasicMessageChannel<Object?> channel = BasicMessageChannel<Object?>('dev.flutter.pigeon.NativeRouterApi.popRoute', codec, binaryMessenger: _binaryMessenger);
+    final Map<Object?, Object?>? replyMap = await channel.send(<Object?>[arg_param]) as Map<Object?, Object?>?;
     if (replyMap == null) {
       throw PlatformException(
         code: 'channel-error',
@@ -249,10 +247,8 @@ class NativeRouterApi {
   }
 
   Future<StackInfo> getStackFromHost() async {
-    final BasicMessageChannel<Object?> channel = BasicMessageChannel<Object?>(
-        'dev.flutter.pigeon.NativeRouterApi.getStackFromHost', codec, binaryMessenger: _binaryMessenger);
-    final Map<Object?, Object?>? replyMap =
-        await channel.send(null) as Map<Object?, Object?>?;
+    final BasicMessageChannel<Object?> channel = BasicMessageChannel<Object?>('dev.flutter.pigeon.NativeRouterApi.getStackFromHost', codec, binaryMessenger: _binaryMessenger);
+    final Map<Object?, Object?>? replyMap = await channel.send(null) as Map<Object?, Object?>?;
     if (replyMap == null) {
       throw PlatformException(
         code: 'channel-error',
@@ -276,10 +272,8 @@ class NativeRouterApi {
   }
 
   Future<void> saveStackToHost(StackInfo arg_stack) async {
-    final BasicMessageChannel<Object?> channel = BasicMessageChannel<Object?>(
-        'dev.flutter.pigeon.NativeRouterApi.saveStackToHost', codec, binaryMessenger: _binaryMessenger);
-    final Map<Object?, Object?>? replyMap =
-        await channel.send(<Object?>[arg_stack]) as Map<Object?, Object?>?;
+    final BasicMessageChannel<Object?> channel = BasicMessageChannel<Object?>('dev.flutter.pigeon.NativeRouterApi.saveStackToHost', codec, binaryMessenger: _binaryMessenger);
+    final Map<Object?, Object?>? replyMap = await channel.send(<Object?>[arg_stack]) as Map<Object?, Object?>?;
     if (replyMap == null) {
       throw PlatformException(
         code: 'channel-error',
@@ -298,10 +292,8 @@ class NativeRouterApi {
   }
 
   Future<void> sendEventToNative(CommonParams arg_params) async {
-    final BasicMessageChannel<Object?> channel = BasicMessageChannel<Object?>(
-        'dev.flutter.pigeon.NativeRouterApi.sendEventToNative', codec, binaryMessenger: _binaryMessenger);
-    final Map<Object?, Object?>? replyMap =
-        await channel.send(<Object?>[arg_params]) as Map<Object?, Object?>?;
+    final BasicMessageChannel<Object?> channel = BasicMessageChannel<Object?>('dev.flutter.pigeon.NativeRouterApi.sendEventToNative', codec, binaryMessenger: _binaryMessenger);
+    final Map<Object?, Object?>? replyMap = await channel.send(<Object?>[arg_params]) as Map<Object?, Object?>?;
     if (replyMap == null) {
       throw PlatformException(
         code: 'channel-error',
@@ -327,23 +319,24 @@ class _FlutterRouterApiCodec extends StandardMessageCodec {
     if (value is CommonParams) {
       buffer.putUint8(128);
       writeValue(buffer, value.encode());
-    } else 
-{
+    } else {
       super.writeValue(buffer, value);
     }
   }
+
   @override
   Object? readValueOfType(int type, ReadBuffer buffer) {
     switch (type) {
-      case 128:       
+      case 128:
         return CommonParams.decode(readValue(buffer)!);
-      
-      default:      
+
+      default:
         return super.readValueOfType(type, buffer);
-      
     }
   }
 }
+
+//这里是native侧调用dart的channel
 abstract class FlutterRouterApi {
   static const MessageCodec<Object?> codec = _FlutterRouterApiCodec();
 
@@ -359,8 +352,7 @@ abstract class FlutterRouterApi {
   void onBackPressed();
   static void setup(FlutterRouterApi? api, {BinaryMessenger? binaryMessenger}) {
     {
-      final BasicMessageChannel<Object?> channel = BasicMessageChannel<Object?>(
-          'dev.flutter.pigeon.FlutterRouterApi.pushRoute', codec, binaryMessenger: binaryMessenger);
+      final BasicMessageChannel<Object?> channel = BasicMessageChannel<Object?>('dev.flutter.pigeon.FlutterRouterApi.pushRoute', codec, binaryMessenger: binaryMessenger);
       if (api == null) {
         channel.setMessageHandler(null);
       } else {
@@ -375,8 +367,7 @@ abstract class FlutterRouterApi {
       }
     }
     {
-      final BasicMessageChannel<Object?> channel = BasicMessageChannel<Object?>(
-          'dev.flutter.pigeon.FlutterRouterApi.popRoute', codec, binaryMessenger: binaryMessenger);
+      final BasicMessageChannel<Object?> channel = BasicMessageChannel<Object?>('dev.flutter.pigeon.FlutterRouterApi.popRoute', codec, binaryMessenger: binaryMessenger);
       if (api == null) {
         channel.setMessageHandler(null);
       } else {
@@ -391,8 +382,7 @@ abstract class FlutterRouterApi {
       }
     }
     {
-      final BasicMessageChannel<Object?> channel = BasicMessageChannel<Object?>(
-          'dev.flutter.pigeon.FlutterRouterApi.removeRoute', codec, binaryMessenger: binaryMessenger);
+      final BasicMessageChannel<Object?> channel = BasicMessageChannel<Object?>('dev.flutter.pigeon.FlutterRouterApi.removeRoute', codec, binaryMessenger: binaryMessenger);
       if (api == null) {
         channel.setMessageHandler(null);
       } else {
@@ -407,8 +397,7 @@ abstract class FlutterRouterApi {
       }
     }
     {
-      final BasicMessageChannel<Object?> channel = BasicMessageChannel<Object?>(
-          'dev.flutter.pigeon.FlutterRouterApi.onForeground', codec, binaryMessenger: binaryMessenger);
+      final BasicMessageChannel<Object?> channel = BasicMessageChannel<Object?>('dev.flutter.pigeon.FlutterRouterApi.onForeground', codec, binaryMessenger: binaryMessenger);
       if (api == null) {
         channel.setMessageHandler(null);
       } else {
@@ -423,8 +412,7 @@ abstract class FlutterRouterApi {
       }
     }
     {
-      final BasicMessageChannel<Object?> channel = BasicMessageChannel<Object?>(
-          'dev.flutter.pigeon.FlutterRouterApi.onBackground', codec, binaryMessenger: binaryMessenger);
+      final BasicMessageChannel<Object?> channel = BasicMessageChannel<Object?>('dev.flutter.pigeon.FlutterRouterApi.onBackground', codec, binaryMessenger: binaryMessenger);
       if (api == null) {
         channel.setMessageHandler(null);
       } else {
@@ -439,8 +427,7 @@ abstract class FlutterRouterApi {
       }
     }
     {
-      final BasicMessageChannel<Object?> channel = BasicMessageChannel<Object?>(
-          'dev.flutter.pigeon.FlutterRouterApi.onNativeResult', codec, binaryMessenger: binaryMessenger);
+      final BasicMessageChannel<Object?> channel = BasicMessageChannel<Object?>('dev.flutter.pigeon.FlutterRouterApi.onNativeResult', codec, binaryMessenger: binaryMessenger);
       if (api == null) {
         channel.setMessageHandler(null);
       } else {
@@ -455,8 +442,7 @@ abstract class FlutterRouterApi {
       }
     }
     {
-      final BasicMessageChannel<Object?> channel = BasicMessageChannel<Object?>(
-          'dev.flutter.pigeon.FlutterRouterApi.onContainerShow', codec, binaryMessenger: binaryMessenger);
+      final BasicMessageChannel<Object?> channel = BasicMessageChannel<Object?>('dev.flutter.pigeon.FlutterRouterApi.onContainerShow', codec, binaryMessenger: binaryMessenger);
       if (api == null) {
         channel.setMessageHandler(null);
       } else {
@@ -471,8 +457,7 @@ abstract class FlutterRouterApi {
       }
     }
     {
-      final BasicMessageChannel<Object?> channel = BasicMessageChannel<Object?>(
-          'dev.flutter.pigeon.FlutterRouterApi.onContainerHide', codec, binaryMessenger: binaryMessenger);
+      final BasicMessageChannel<Object?> channel = BasicMessageChannel<Object?>('dev.flutter.pigeon.FlutterRouterApi.onContainerHide', codec, binaryMessenger: binaryMessenger);
       if (api == null) {
         channel.setMessageHandler(null);
       } else {
@@ -487,8 +472,7 @@ abstract class FlutterRouterApi {
       }
     }
     {
-      final BasicMessageChannel<Object?> channel = BasicMessageChannel<Object?>(
-          'dev.flutter.pigeon.FlutterRouterApi.sendEventToFlutter', codec, binaryMessenger: binaryMessenger);
+      final BasicMessageChannel<Object?> channel = BasicMessageChannel<Object?>('dev.flutter.pigeon.FlutterRouterApi.sendEventToFlutter', codec, binaryMessenger: binaryMessenger);
       if (api == null) {
         channel.setMessageHandler(null);
       } else {
@@ -503,8 +487,7 @@ abstract class FlutterRouterApi {
       }
     }
     {
-      final BasicMessageChannel<Object?> channel = BasicMessageChannel<Object?>(
-          'dev.flutter.pigeon.FlutterRouterApi.onBackPressed', codec, binaryMessenger: binaryMessenger);
+      final BasicMessageChannel<Object?> channel = BasicMessageChannel<Object?>('dev.flutter.pigeon.FlutterRouterApi.onBackPressed', codec, binaryMessenger: binaryMessenger);
       if (api == null) {
         channel.setMessageHandler(null);
       } else {

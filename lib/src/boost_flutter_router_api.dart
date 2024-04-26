@@ -7,11 +7,12 @@ import 'flutter_boost_app.dart';
 import 'messages.dart';
 
 /// The MessageChannel counterpart on the Dart side.
+/// native调用dart侧，相关push的函数尤其用于natvie侧调用
 class BoostFlutterRouterApi extends FlutterRouterApi {
   factory BoostFlutterRouterApi(FlutterBoostAppState appState) {
     if (_instance == null) {
       _instance = BoostFlutterRouterApi._(appState);
-      FlutterRouterApi.setup(_instance);
+      FlutterRouterApi.setup(_instance); //构建各种message channel
     }
     return _instance!;
   }
@@ -27,12 +28,8 @@ class BoostFlutterRouterApi extends FlutterRouterApi {
   @override
   void pushRoute(CommonParams param) {
     _addInOperationQueueOrExcute(() {
-      appState.pushWithInterceptor(
-          param.pageName, true /* isFromHost */, true /* isFlutterPage */,
-          withContainer: true,
-          uniqueId: param.uniqueId,
-          arguments: Map<String, dynamic>.from(
-              param.arguments ?? <String, dynamic>{}));
+      appState.pushWithInterceptor(param.pageName, true /* isFromHost */, true /* isFlutterPage */,
+          withContainer: true, uniqueId: param.uniqueId, arguments: Map<String, dynamic>.from(param.arguments ?? <String, dynamic>{}));
     });
   }
 

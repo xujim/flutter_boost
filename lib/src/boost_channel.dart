@@ -10,6 +10,7 @@ import 'messages.dart';
 
 typedef EventListener = Future<dynamic> Function(String key, Map arguments);
 
+/// 更多是个方便使用的类，底层基于FlutterBoostAppState
 /// The [BoostChannel] is a tool to get [FlutterBoostAppState]
 /// to operate the Custom events
 ///
@@ -23,8 +24,7 @@ class BoostChannel {
   FlutterBoostAppState? _appState;
 
   static BoostChannel get instance {
-    _instance._appState ??= overlayKey.currentContext
-        ?.findAncestorStateOfType<FlutterBoostAppState>();
+    _instance._appState ??= overlayKey.currentContext?.findAncestorStateOfType<FlutterBoostAppState>();
     return _instance;
   }
 
@@ -33,16 +33,14 @@ class BoostChannel {
   ///
   /// The [VoldCallBack] is to remove this listener
   VoidCallback addEventListener(String key, EventListener listener) {
-    assert(
-        _appState != null, 'Please check if the engine has been initialized!');
+    assert(_appState != null, 'Please check if the engine has been initialized!');
     return _appState!.addEventListener(key, listener);
   }
 
   ///Send a custom event to native with [key] and [args]
   ///Calls when flutter(here) wants to send event to native side
   void sendEventToNative(String key, Map<String, Object> args) {
-    assert(
-        _appState != null, 'Please check if the engine has been initialized!');
+    assert(_appState != null, 'Please check if the engine has been initialized!');
     var params = CommonParams()
       ..key = key
       ..arguments = args;

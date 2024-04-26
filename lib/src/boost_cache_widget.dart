@@ -7,13 +7,12 @@ import 'package:flutter/widgets.dart';
 /// Widget with caching function, solve：
 ///1.Page rebuild caused by overlay；
 ///2.Page rebuild caused by navigator2.0；
+///TODO: 这是用来干嘛的？
 class BoostCacheWidget extends StatefulWidget {
   final String uniqueId;
   final WidgetBuilder builder;
 
-  const BoostCacheWidget(
-      {required this.uniqueId, required this.builder, Key? key})
-      : super(key: key);
+  const BoostCacheWidget({required this.uniqueId, required this.builder, Key? key}) : super(key: key);
 
   @override
   State<BoostCacheWidget> createState() => _BoostCacheWidgetState();
